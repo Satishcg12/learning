@@ -350,6 +350,9 @@ class Bird extends Box {
         this.dy += this.GRAVITY;
         this.x += this.dx;
         this.y += this.dy;
+        // Calculate rotation based on vertical speed
+        let rotation = Math.min(Math.max(this.dy * 5, -45), 45); // Limit rotation between -45 and 45 degrees
+        
         // if falling
         if (this.dy > 0) {
             applyStyles(this.element, {
@@ -372,6 +375,7 @@ class Bird extends Box {
         applyStyles(this.element, {
             left: this.x + 'px',
             top: this.y + 'px',
+            transform: `rotate(${rotation}deg)`
         })
     }
     jump() {
