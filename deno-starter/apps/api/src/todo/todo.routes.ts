@@ -1,5 +1,5 @@
-import { Context, Router } from "@oak/oak";
-import * as Controller from "../controllers/todo.controller.ts";
+import { Context, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import * as Controller from "@api/todo/todo.controller.ts";
 
 interface Book {
   id: string;

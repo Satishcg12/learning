@@ -1,0 +1,8 @@
+{
+  "importMap": "./import_map.json",
+  "tasks": {
+    "lint": "deno lint",
+    "format": "deno fmt",
+    "test": "deno test"
+  }
+}

@@ -1,9 +1,9 @@
-import { RouterContext } from "@oak/oak";
-import * as Service from "../service/todo.service.ts";
+import { RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import * as Service from "@api/todo/todo.service.ts";
 
 export const CreateTodo = async (ctx: RouterContext<string>) => {
   try {
-    const body = await ctx.request.body.json();
+    const body = await ctx.request.body({ type: "json" }).value;
     const { title, description } = body;
     // Validate the request body
     if (!title || !description) {
@@ -11,11 +11,11 @@ export const CreateTodo = async (ctx: RouterContext<string>) => {
       ctx.response.body = { message: "Title and description are required" };
       return;
     }
-    const res = Service.CreateTodo({
+    const res = await Service.CreateTodo({
       title,
       description,
     });
-    
+
     ctx.response.status = 201;
     ctx.response.body = {
       id: res.id,
@@ -33,14 +33,14 @@ export const CreateTodo = async (ctx: RouterContext<string>) => {
         ctx.response.body = { message: error.message };
         return;
       }
-      
+
       if (error.message === "Failed to create todo") {
         ctx.response.status = 500;
         ctx.response.body = { message: error.message };
         return;
       }
     }
-    
+
     // Default error handling
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
@@ -48,14 +48,14 @@ export const CreateTodo = async (ctx: RouterContext<string>) => {
   }
 };
 
-export const GetTodos = (ctx: RouterContext<string>) => {
+export const GetTodos = async (ctx: RouterContext<string>) => {
   try {
     const url = new URL(ctx.request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = parseInt(url.searchParams.get("limit") || "10");
 
-    const res = Service.GetTodos({ page, limit });
-    
+    const res = await Service.GetTodos({ page, limit });
+
     ctx.response.status = 200;
     ctx.response.body = res;
   } catch (error) {
@@ -66,14 +66,14 @@ export const GetTodos = (ctx: RouterContext<string>) => {
         ctx.response.body = { message: error.message };
         return;
       }
-      
+
       if (error.message === "Failed to get todos") {
         ctx.response.status = 500;
         ctx.response.body = { message: error.message };
         return;
       }
     }
-    
+
     // Default error handling
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
@@ -81,7 +81,7 @@ export const GetTodos = (ctx: RouterContext<string>) => {
   }
 };
 
-export const GetTodoById = (ctx: RouterContext<"/todos/:id">) => {
+export const GetTodoById = async (ctx: RouterContext<string>) => {
   try {
     const id = ctx.params.id;
     if (!id) {
@@ -90,38 +90,7 @@ export const GetTodoById = (ctx: RouterContext<"/todos/:id">) => {
       return;
     }
 
-    const res = Service.GetTodoById(id);
-    
-    ctx.response.status = 200;
-    ctx.response.body = res;
-  } catch (error) {
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message === "Todo not found") {
-        ctx.response.status = 404;
-        ctx.response.body = { message: error.message };
-        return;
-      }
-    }
-    
-    // Default error handling
-    ctx.response.status = 500;
-    ctx.response.body = { message: "Internal server error" };
-    return;
-  }
-};
-
-export const UpdateTodo = async (ctx: RouterContext<"/todos/:id">) => {
-  try {
-    const id = ctx.params.id;
-    if (!id) {
-      ctx.response.status = 400;
-      ctx.response.body = { message: "ID is required" };
-      return;
-    }
-
-    const body = await ctx.request.body.json();
-    const res = Service.UpdateTodo(id, body);
+    const res = await Service.GetTodoById(id);
 
     ctx.response.status = 200;
     ctx.response.body = res;
@@ -134,7 +103,7 @@ export const UpdateTodo = async (ctx: RouterContext<"/todos/:id">) => {
         return;
       }
     }
-    
+
     // Default error handling
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
@@ -142,7 +111,7 @@ export const UpdateTodo = async (ctx: RouterContext<"/todos/:id">) => {
   }
 };
 
-export const DeleteTodo = (ctx: RouterContext<"/todos/:id">) => {
+export const UpdateTodo = async (ctx: RouterContext<string>) => {
   try {
     const id = ctx.params.id;
     if (!id) {
@@ -151,8 +120,39 @@ export const DeleteTodo = (ctx: RouterContext<"/todos/:id">) => {
       return;
     }
 
-    const res = Service.DeleteTodo(id);
-    
+    const body = await ctx.request.body({ type: "json" }).value;
+    const res = await Service.UpdateTodo(id, body);
+
+    ctx.response.status = 200;
+    ctx.response.body = res;
+  } catch (error) {
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message === "Todo not found") {
+        ctx.response.status = 404;
+        ctx.response.body = { message: error.message };
+        return;
+      }
+    }
+
+    // Default error handling
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal server error" };
+    return;
+  }
+};
+
+export const DeleteTodo = async (ctx: RouterContext<string>) => {
+  try {
+    const id = ctx.params.id;
+    if (!id) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "ID is required" };
+      return;
+    }
+
+    const res = await Service.DeleteTodo(id);
+
     ctx.response.status = 204; // No content
     ctx.response.body = null;
   } catch (error) {
@@ -164,7 +164,7 @@ export const DeleteTodo = (ctx: RouterContext<"/todos/:id">) => {
         return;
       }
     }
-    
+
     // Default error handling
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
@@ -172,10 +172,10 @@ export const DeleteTodo = (ctx: RouterContext<"/todos/:id">) => {
   }
 };
 
-export const DeleteAllTodos = (ctx: RouterContext<string>) => {
+export const DeleteAllTodos = async (ctx: RouterContext<string>) => {
   try {
-    const res = Service.DeleteAllTodos();
-    
+    const res = await Service.DeleteAllTodos();
+
     ctx.response.status = 204; // No content
     ctx.response.body = null;
   } catch (error) {
@@ -187,7 +187,7 @@ export const DeleteAllTodos = (ctx: RouterContext<string>) => {
         return;
       }
     }
-    
+
     // Default error handling
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };

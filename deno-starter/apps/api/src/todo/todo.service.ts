@@ -1,8 +1,15 @@
-import { createTodo, getTodos, updateTodo, deleteTodo, deleteAllTodos, getTodoById } from "../DAO/todo.array.dao.ts";
-import { CreateTodoRequest, GetTodosRequest } from "../DTO/todo.dto.ts";
-import { Todo } from "../models/todo.model.ts";
+import {
+  createTodo,
+  deleteAllTodos,
+  deleteTodo,
+  getTodoById,
+  getTodos,
+  updateTodo,
+} from "@api/todo/todo.array.dao.ts";
+import { CreateTodoRequest, GetTodosRequest } from "@api/todo/todo.dto.ts";
+import { Todo } from "@api/todo/todo.model.ts";
 
-export const CreateTodo = (todo: CreateTodoRequest) => {
+export const CreateTodo = async (todo: CreateTodoRequest) => {
   try {
     // Validate the todo object
     if (!todo.title || !todo.description) {
@@ -19,7 +26,7 @@ export const CreateTodo = (todo: CreateTodoRequest) => {
       updatedAt: new Date(),
     };
 
-    const todores = createTodo(newTodo);
+    const todores = await createTodo(newTodo);
     if (!todores) {
       throw new Error("Failed to create todo");
     }
@@ -36,7 +43,7 @@ export const CreateTodo = (todo: CreateTodoRequest) => {
   }
 };
 
-export const GetTodos = (req: GetTodosRequest) => {
+export const GetTodos = async (req: GetTodosRequest) => {
   try {
     const page = req.page || 1;
     const limit = req.limit || 10;
@@ -46,7 +53,7 @@ export const GetTodos = (req: GetTodosRequest) => {
       throw new Error("Page and limit must be greater than 0");
     }
 
-    const todos = getTodos(page, limit);
+    const todos = await getTodos(page, limit);
     if (!todos) {
       throw new Error("Failed to get todos");
     }
@@ -62,14 +69,14 @@ export const GetTodos = (req: GetTodosRequest) => {
   }
 };
 
-export const GetTodoById = (id: string) => {
+export const GetTodoById = async (id: string) => {
   try {
     // Validate the id
     if (!id) {
       throw new Error("ID is required");
     }
 
-    const todo = getTodoById(id);
+    const todo = await getTodoById(id);
     if (!todo) {
       throw new Error("Todo not found");
     }
@@ -87,7 +94,7 @@ export const GetTodoById = (id: string) => {
   }
 };
 
-export const UpdateTodo = (id: string, updatedTodo: Partial<Todo>) => {
+export const UpdateTodo = async (id: string, updatedTodo: Partial<Todo>) => {
   try {
     // Validate the id
     if (!id) {
@@ -96,9 +103,9 @@ export const UpdateTodo = (id: string, updatedTodo: Partial<Todo>) => {
 
     // Update updatedAt timestamp
     updatedTodo.updatedAt = new Date();
-    
+
     // Use the DAO's updateTodo function to persist changes
-    const updated = updateTodo(id, updatedTodo);
+    const updated = await updateTodo(id, updatedTodo);
     if (!updated) {
       throw new Error("Todo not found");
     }
@@ -116,14 +123,14 @@ export const UpdateTodo = (id: string, updatedTodo: Partial<Todo>) => {
   }
 };
 
-export const DeleteTodo = (id: string) => {
+export const DeleteTodo = async (id: string) => {
   try {
     // Validate the id
     if (!id) {
       throw new Error("ID is required");
     }
 
-    const result = deleteTodo(id);
+    const result = await deleteTodo(id);
     if (!result) {
       throw new Error("Todo not found");
     }
@@ -134,10 +141,10 @@ export const DeleteTodo = (id: string) => {
   }
 };
 
-export const DeleteAllTodos = () => {
+export const DeleteAllTodos = async () => {
   try {
     // Use the DAO function to clear the todos array
-    const result = deleteAllTodos();
+    const result = await deleteAllTodos();
     if (!result) {
       throw new Error("Failed to delete todos");
     }

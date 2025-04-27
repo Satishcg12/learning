@@ -1,0 +1,72 @@
+### Variables
+@baseUrl = http://localhost:8000/api
+@todoId = replace-with-actual-id
+
+### Test the welcome endpoint
+GET {{baseUrl}}/todos
+Accept: application/json
+
+### Create a new todo
+POST {{baseUrl}}/todos
+Content-Type: application/json
+
+{
+  "title": "Learn Deno",
+  "description": "Explore Deno runtime and its features"
+}
+
+### Get all todos (with pagination)
+GET {{baseUrl}}/todos?page=1&limit=10
+Accept: application/json
+
+### Get a specific todo by ID
+# Replace the ID in the URL with an actual todo ID
+GET {{baseUrl}}/todos/{{todoId}}
+Accept: application/json
+
+### Update a todo
+# Replace the ID in the URL with an actual todo ID
+PUT {{baseUrl}}/todos/{{todoId}}
+Content-Type: application/json
+
+{
+  "title": "Learn Deno - Updated",
+  "description": "Explore Deno runtime and Oak framework",
+  "completed": true
+}
+
+### Delete a todo
+# Replace the ID in the URL with an actual todo ID
+DELETE {{baseUrl}}/todos/{{todoId}}
+
+### Delete all todos
+DELETE {{baseUrl}}/todos
+
+### Create multiple todos for testing
+POST {{baseUrl}}/todos
+Content-Type: application/json
+
+{
+  "title": "Build Deno API",
+  "description": "Create a RESTful API with Deno and Oak"
+}
+
+###
+
+POST {{baseUrl}}/todos
+Content-Type: application/json
+
+{
+  "title": "Write Tests",
+  "description": "Create integration tests for the Deno API"
+}
+
+###
+
+POST {{baseUrl}}/todos
+Content-Type: application/json
+
+{
+  "title": "Deploy Deno App",
+  "description": "Deploy the application to a cloud provider"
+}

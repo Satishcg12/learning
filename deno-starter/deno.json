@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom", "esnext"],
+    "strict": true
+  },
+  "fmt": {
+    "options": {
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "useTabs": false,
+      "singleQuote": true,
+      "semiColons": true
+    }
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "setup": "deno run --allow-all scripts/setup-hook.ts",
+    "dev": "denon run --allow-all apps/api/src/app.ts",
+    "prod": "deno run --allow-all apps/api/src/app.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "denon": "https://deno.land/x/denon/denon.ts"
+  }
+}

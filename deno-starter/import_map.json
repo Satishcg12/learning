@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@config/": "./packages/config/",
+    "@utils/": "./packages/utils/",
+    "@types/": "./packages/types/",
+    "@api/": "./apps/api/src/"
+  }
+}
