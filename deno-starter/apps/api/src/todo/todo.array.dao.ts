@@ -1,9 +1,9 @@
 import { TodoResponse } from "@api/todo/todo.dto.ts";
 import { Todo } from "@api/todo/todo.model.ts";
-import { TodoDao } from "@api/todo/todo.dao.ts";
+import { ITodoDao } from "@api/todo/todo.interface.ts";
 
 // In-memory implementation of TodoDao using an array
-export class TodoArrayDao implements TodoDao {
+export class TodoArrayDao implements ITodoDao {
   private todos: Todo[] = [];
 
   getTodos(
@@ -65,16 +65,5 @@ export class TodoArrayDao implements TodoDao {
   }
 }
 
-// Create an instance of TodoArrayDao to export as a singleton
-const todoDao: TodoDao = new TodoArrayDao();
-export default todoDao;
-
-// Export individual methods for backward compatibility
-export const { 
-  getTodos, 
-  getTodoById, 
-  createTodo, 
-  updateTodo, 
-  deleteTodo,
-  deleteAllTodos 
-} = todoDao;
+// Export the singleton instance of TodoArrayDao
+export const TodoDao = new TodoArrayDao();

@@ -1,5 +1,5 @@
 import { RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import * as Service from "@api/todo/todo.service.ts";
+import { todoService } from "@api/todo/todo.service.impl.ts";
 
 export const CreateTodo = async (ctx: RouterContext<string>) => {
   try {
@@ -11,20 +11,13 @@ export const CreateTodo = async (ctx: RouterContext<string>) => {
       ctx.response.body = { message: "Title and description are required" };
       return;
     }
-    const res = await Service.CreateTodo({
+    const res = await todoService.createTodo({
       title,
       description,
     });
 
     ctx.response.status = 201;
-    ctx.response.body = {
-      id: res.id,
-      title: res.title,
-      description: res.description,
-      completed: res.completed,
-      createdAt: res.createdAt,
-      updatedAt: res.updatedAt,
-    };
+    ctx.response.body = res;
   } catch (error) {
     // Handle specific error types
     if (error instanceof Error) {
@@ -54,7 +47,7 @@ export const GetTodos = async (ctx: RouterContext<string>) => {
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = parseInt(url.searchParams.get("limit") || "10");
 
-    const res = await Service.GetTodos({ page, limit });
+    const res = await todoService.getTodos({ page, limit });
 
     ctx.response.status = 200;
     ctx.response.body = res;
@@ -90,7 +83,7 @@ export const GetTodoById = async (ctx: RouterContext<string>) => {
       return;
     }
 
-    const res = await Service.GetTodoById(id);
+    const res = await todoService.getTodoById(id);
 
     ctx.response.status = 200;
     ctx.response.body = res;
@@ -121,7 +114,7 @@ export const UpdateTodo = async (ctx: RouterContext<string>) => {
     }
 
     const body = await ctx.request.body({ type: "json" }).value;
-    const res = await Service.UpdateTodo(id, body);
+    const res = await todoService.updateTodo(id, body);
 
     ctx.response.status = 200;
     ctx.response.body = res;
@@ -151,7 +144,7 @@ export const DeleteTodo = async (ctx: RouterContext<string>) => {
       return;
     }
 
-    const res = await Service.DeleteTodo(id);
+    const res = await todoService.deleteTodo(id);
 
     ctx.response.status = 204; // No content
     ctx.response.body = null;
@@ -174,7 +167,7 @@ export const DeleteTodo = async (ctx: RouterContext<string>) => {
 
 export const DeleteAllTodos = async (ctx: RouterContext<string>) => {
   try {
-    const res = await Service.DeleteAllTodos();
+    const res = await todoService.deleteAllTodos();
 
     ctx.response.status = 204; // No content
     ctx.response.body = null;

@@ -20,7 +20,11 @@
   "tasks": {
     "setup": "deno run --allow-all scripts/setup-hook.ts",
     "dev": "denon run --allow-all apps/api/src/app.ts",
-    "prod": "deno run --allow-all apps/api/src/app.ts"
+    "prod": "deno run --allow-all apps/api/src/app.ts",
+    "make-migrations": "deno run --allow-all scripts/make-migrations.ts",
+    "migrate-up": "deno run --allow-all scripts/migrate.up.ts",
+    "migrate-down": "deno run --allow-all scripts/migrate.down.ts"
+
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",

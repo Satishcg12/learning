@@ -1,4 +1,4 @@
-import { TodoDao } from "@api/todo/todo.array.dao.ts";
+import { TodoDao } from "@api/todo/todo.postgres.dao.ts";
 import {
   CreateTodoRequest,
   GetTodosRequest,
@@ -26,7 +26,8 @@ export class TodoServiceImpl implements ITodoService {
         updatedAt: new Date(),
       };
 
-      const todores = await newTodo;
+      // Use the DAO to persist the todo in the in-memory array
+      const todores = await TodoDao.createTodo(newTodo);
       if (!todores) {
         throw new Error("Failed to create todo");
       }

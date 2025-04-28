@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:8000/api
-@todoId = replace-with-actual-id
+@todoId = 1
 
 ### Test the welcome endpoint
 GET {{baseUrl}}/todos
