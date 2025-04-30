@@ -1,5 +1,5 @@
 import { TodoResponse } from "@api/todo/todo.dto.ts";
-import { Todo } from "@api/todo/todo.model.ts";
+import { Todo } from "../models/todo.model.ts";
 import { ITodoDao } from "@api/todo/todo.interface.ts";
 
 // In-memory implementation of TodoDao using an array

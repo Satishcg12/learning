@@ -4,7 +4,7 @@ import {
   TodoListResponse,
   TodoResponse,
 } from "@api/todo/todo.dto.ts";
-import { Todo } from "@api/todo/todo.model.ts";
+import { Todo } from "../models/todo.model.ts";
 
 export interface ITodoService {
   createTodo(todo: CreateTodoRequest): Promise<TodoResponse>;

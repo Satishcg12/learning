@@ -6,7 +6,7 @@ import {
   TodoResponse,
 } from "@api/todo/todo.dto.ts";
 import { ITodoService } from "@api/todo/todo.interface.ts";
-import { Todo } from "@api/todo/todo.model.ts";
+import { Todo } from "@api/models/todo.model.ts";
 
 export class TodoServiceImpl implements ITodoService {
   async createTodo(todo: CreateTodoRequest): Promise<TodoResponse> {

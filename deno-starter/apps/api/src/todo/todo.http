@@ -41,32 +41,3 @@ DELETE {{baseUrl}}/todos/{{todoId}}
 
 ### Delete all todos
 DELETE {{baseUrl}}/todos
-
-### Create multiple todos for testing
-POST {{baseUrl}}/todos
-Content-Type: application/json
-
-{
-  "title": "Build Deno API",
-  "description": "Create a RESTful API with Deno and Oak"
-}
-
-###
-
-POST {{baseUrl}}/todos
-Content-Type: application/json
-
-{
-  "title": "Write Tests",
-  "description": "Create integration tests for the Deno API"
-}
-
-###
-
-POST {{baseUrl}}/todos
-Content-Type: application/json
-
-{
-  "title": "Deploy Deno App",
-  "description": "Deploy the application to a cloud provider"
-}

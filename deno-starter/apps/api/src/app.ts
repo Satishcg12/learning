@@ -1,7 +1,7 @@
-import { Application } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { errorHandler } from "./middleware/errorHandler.ts";
-import { initDb } from "@utils/db.ts";
 import apiRouter from "@api/routes.ts";
+import { initDb } from "@utils/db.ts";
+import { info } from "@utils/logger.ts";
+import { Application } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 
 // start the server
 const PORT = 8000;
@@ -14,26 +14,26 @@ const db = initDb({
   database: "test",
   hostname: "localhost",
   port: 5432,
-  poolSize: 10
+  poolSize: 10,
 });
 
 // Create Oak application
 export const app = new Application();
-
 
 // Routes
 app.use(apiRouter.routes());
 app.use(apiRouter.allowedMethods());
 
 app.addEventListener("listen", () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  
+  info(`Server is running on http://localhost:${PORT}`);
 });
 await app.listen({ port: PORT });
 
 // Close database connections when application shuts down
 Deno.addSignalListener("SIGINT", async () => {
-  console.log("Shutting down database connections...");
+  info("Shutting down database connections...");
   await db.close();
-  console.log("Database connections closed");
+  info("Database connections closed");
   Deno.exit();
 });
