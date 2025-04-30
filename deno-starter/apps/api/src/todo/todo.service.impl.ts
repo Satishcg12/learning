@@ -7,34 +7,46 @@ import {
 } from "@api/todo/todo.dto.ts";
 import { ITodoService } from "@api/todo/todo.interface.ts";
 import { Todo } from "../models/todo.model.ts";
+import { ValidationError, NotFoundError, DatabaseError, DaoError } from "../utils/errors.ts";
 
 export class TodoServiceImpl implements ITodoService {
   async createTodo(todo: CreateTodoRequest): Promise<TodoResponse> {
     try {
       // Validate the todo object
-      if (!todo.title || !todo.description) {
-        throw new Error("Title and description are required");
+      if (!todo.title) {
+        throw new ValidationError("Title is required");
+      }
+      if (!todo.description) {
+        throw new ValidationError("Description is required");  
       }
 
-      // Create a new todo object
-      const newTodo: Todo = {
+      // Create a new todo object with the required fields
+      const newTodo = {
         id: crypto.randomUUID(),
         title: todo.title,
         description: todo.description,
         completed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
-      // Use the DAO to persist the todo in the in-memory array
-      const todores = await TodoDao.createTodo(newTodo);
-      if (!todores) {
-        throw new Error("Failed to create todo");
-      }
+      // Use the DAO to persist the todo
+      const createdTodo = await TodoDao.createTodo(newTodo as Todo);
 
-      return this.mapToTodoResponse(todores);
+      return this.mapToTodoResponse(createdTodo);
     } catch (error) {
-      throw new Error("Internal server error");
+      if (error instanceof ValidationError) {
+        throw error; // Pass validation errors through
+      }
+      
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in createTodo service:', error);
+      throw new DatabaseError(
+        "Failed to create todo", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -45,22 +57,36 @@ export class TodoServiceImpl implements ITodoService {
 
       // Validate the page and limit
       if (page < 1 || limit < 1) {
-        throw new Error("Page and limit must be greater than 0");
+        throw new ValidationError("Page and limit must be greater than 0");
       }
 
+      // Get todos with pagination
       const todos = await TodoDao.getTodos(page, limit);
-      if (!todos) {
-        throw new Error("Failed to get todos");
-      }
+      
+      // Get the total count
+      const total = await TodoDao.getTodoCount();
 
       return {
-        todos: todos.map((todo) => this.mapToTodoResponse(todo)),
-        total: todos.length,
-        page: page,
-        limit: limit,
+        todos,
+        total,
+        page,
+        limit,
       };
     } catch (error) {
-      throw new Error("Internal server error");
+      if (error instanceof ValidationError) {
+        throw error; // Pass validation errors through
+      }
+      
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in getTodos service:', error);
+      throw new DatabaseError(
+        "Failed to retrieve todos", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -68,17 +94,30 @@ export class TodoServiceImpl implements ITodoService {
     try {
       // Validate the id
       if (!id) {
-        throw new Error("ID is required");
+        throw new ValidationError("ID is required");
       }
 
       const todo = await TodoDao.getTodoById(id);
       if (!todo) {
-        throw new Error("Todo not found");
+        throw new NotFoundError("Todo not found");
       }
 
       return this.mapToTodoResponse(todo);
     } catch (error) {
-      throw error;
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
+        throw error; // Pass these errors through
+      }
+      
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in getTodoById service:', error);
+      throw new DatabaseError(
+        "Failed to retrieve todo", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -89,21 +128,31 @@ export class TodoServiceImpl implements ITodoService {
     try {
       // Validate the id
       if (!id) {
-        throw new Error("ID is required");
+        throw new ValidationError("ID is required");
       }
-
-      // Update updatedAt timestamp
-      updatedTodo.updatedAt = new Date();
 
       // Use the DAO's updateTodo function to persist changes
       const updated = await TodoDao.updateTodo(id, updatedTodo);
       if (!updated) {
-        throw new Error("Todo not found");
+        throw new NotFoundError("Todo not found");
       }
 
       return this.mapToTodoResponse(updated);
     } catch (error) {
-      throw error; // Re-throw the original error to preserve the message
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
+        throw error; // Pass these errors through
+      }
+      
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in updateTodo service:', error);
+      throw new DatabaseError(
+        "Failed to update todo", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -111,30 +160,47 @@ export class TodoServiceImpl implements ITodoService {
     try {
       // Validate the id
       if (!id) {
-        throw new Error("ID is required");
+        throw new ValidationError("ID is required");
       }
 
       const result = await TodoDao.deleteTodo(id);
       if (!result) {
-        throw new Error("Todo not found");
+        throw new NotFoundError("Todo not found");
       }
 
       return true;
     } catch (error) {
-      throw error;
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
+        throw error; // Pass these errors through
+      }
+      
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in deleteTodo service:', error);
+      throw new DatabaseError(
+        "Failed to delete todo", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
   async deleteAllTodos(): Promise<boolean> {
     try {
-      // Use the DAO function to clear the todos array
-      const result = await TodoDao.deleteAllTodos();
-      if (!result) {
-        throw new Error("Failed to delete todos");
-      }
-      return true;
+      return await TodoDao.deleteAllTodos();
     } catch (error) {
-      throw error;
+      // Handle DAO errors
+      if (error instanceof DaoError) {
+        throw new DatabaseError(error.message, error.originalError);
+      }
+      
+      console.error('Error in deleteAllTodos service:', error);
+      throw new DatabaseError(
+        "Failed to delete all todos", 
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -145,8 +211,8 @@ export class TodoServiceImpl implements ITodoService {
       title: todo.title,
       description: todo.description,
       completed: todo.completed,
-      createdAt: todo.createdAt,
-      updatedAt: todo.updatedAt,
+      createdAt: todo.created_at,
+      updatedAt: todo.updated_at,
     };
   }
 }

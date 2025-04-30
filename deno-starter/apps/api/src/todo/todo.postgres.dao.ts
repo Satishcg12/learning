@@ -1,7 +1,8 @@
 import { TodoResponse } from "@api/todo/todo.dto.ts";
 import { Todo } from "../models/todo.model.ts";
 import { ITodoDao } from "@api/todo/todo.interface.ts";
-import { getDb } from "../../../../packages/utils/db.ts";
+import todoModel from "../models/todo.model.ts";
+import { DaoError } from "../utils/errors.ts";
 
 export class TodoPostgresDao implements ITodoDao {
   
@@ -10,69 +11,45 @@ export class TodoPostgresDao implements ITodoDao {
     limit: number = 10,
   ): Promise<TodoResponse[]> {
     try {
-      const offset = (page - 1) * limit;
+      // Using the model with pagination
+      const result = await todoModel
+        .select("id", "title", "description", "completed", "created_at", "updated_at")
+        .orderBy("created_at", "DESC")
+        .limit(limit)
+        .offset((page - 1) * limit)
+        .getAll<Todo>();
       
-      const db = getDb();
-      return await db.query<TodoResponse>(`
-        SELECT 
-          id, 
-          title, 
-          description, 
-          completed, 
-          created_at as "createdAt", 
-          updated_at as "updatedAt"
-        FROM todos
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-      `, [limit, offset]);
+      // Map to TodoResponse
+      return result.map(todo => ({
+        id: todo.id,
+        title: todo.title,
+        description: todo.description,
+        completed: todo.completed,
+        createdAt: todo.created_at,
+        updatedAt: todo.updated_at
+      }));
       
     } catch (error) {
-      console.error('Error fetching todos:', error);
-      throw new Error('Failed to get todos');
+      console.error('DAO error fetching todos:', error);
+      throw new DaoError('Failed to get todos', error instanceof Error ? error : undefined);
     }
   }
 
   async getTodoById(id: string): Promise<Todo | null> {
     try {
-      const db = getDb();
-      const result = await db.query<Todo>(`
-        SELECT 
-          id, 
-          title, 
-          description, 
-          completed, 
-          created_at as "createdAt", 
-          updated_at as "updatedAt"
-        FROM todos
-        WHERE id = $1
-      `, [id]);
-      
-      return result.length > 0 ? result[0] : null;
+      return await todoModel.find(id);
     } catch (error) {
-      console.error('Error fetching todo by id:', error);
-      throw new Error('Failed to get todo');
+      console.error('DAO error fetching todo by id:', error);
+      throw new DaoError('Failed to get todo', error instanceof Error ? error : undefined);
     }
   }
 
   async createTodo(todo: Todo): Promise<Todo> {
     try {
-      const db = getDb();
-      const result = await db.query<Todo>(`
-        INSERT INTO todos (title, description, completed, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, title, description, completed, created_at as "createdAt", updated_at as "updatedAt"
-      `, [
-        todo.title,
-        todo.description,
-        todo.completed,
-        todo.createdAt,
-        todo.updatedAt
-      ]);
-      
-      return result[0];
+      return await todoModel.createTodo(todo);
     } catch (error) {
-      console.error('Error creating todo:', error);
-      throw new Error('Failed to create todo');
+      console.error('DAO error creating todo:', error);
+      throw new DaoError('Failed to create todo', error instanceof Error ? error : undefined);
     }
   }
 
@@ -80,105 +57,40 @@ export class TodoPostgresDao implements ITodoDao {
     id: string,
     updatedTodo: Partial<Todo>,
   ): Promise<Todo | null> {
-    // Use a transaction for complex update operation
     try {
-      const db = getDb();
-      
-      return await db.transaction(async (client) => {
-        // Build dynamic SQL for update
-        const updates: string[] = [];
-        const values: any[] = [];
-        let paramCount = 1;
-        
-        if (updatedTodo.title !== undefined) {
-          updates.push(`title = $${paramCount++}`);
-          values.push(updatedTodo.title);
-        }
-        
-        if (updatedTodo.description !== undefined) {
-          updates.push(`description = $${paramCount++}`);
-          values.push(updatedTodo.description);
-        }
-        
-        if (updatedTodo.completed !== undefined) {
-          updates.push(`completed = $${paramCount++}`);
-          values.push(updatedTodo.completed);
-        }
-        
-        if (updatedTodo.updatedAt !== undefined) {
-          updates.push(`updated_at = $${paramCount++}`);
-          values.push(updatedTodo.updatedAt);
-        }
-        
-        // Add ID as the last parameter
-        values.push(id);
-        
-        if (updates.length === 0) {
-          const todoResult = await client.queryObject<Todo>(`
-            SELECT id, title, description, completed, created_at as "createdAt", updated_at as "updatedAt"
-            FROM todos
-            WHERE id = $1
-          `, [id]);
-          return todoResult.rows.length > 0 ? todoResult.rows[0] : null;
-        }
-        
-        const result = await client.queryObject<Todo>(`
-          UPDATE todos 
-          SET ${updates.join(', ')}
-          WHERE id = $${paramCount}
-          RETURNING id, title, description, completed, created_at as "createdAt", updated_at as "updatedAt"
-        `, values);
-        
-        return result.rows.length > 0 ? result.rows[0] : null;
-      });
+      return await todoModel.updateTodo(id, updatedTodo);
     } catch (error) {
-      console.error('Error updating todo:', error);
-      throw new Error('Failed to update todo');
+      console.error('DAO error updating todo:', error);
+      throw new DaoError('Failed to update todo', error instanceof Error ? error : undefined);
     }
   }
 
   async deleteTodo(id: string): Promise<boolean> {
     try {
-      const db = getDb();
-      const result = await db.query<{ id: string }>(`
-        DELETE FROM todos
-        WHERE id = $1
-        RETURNING id
-      `, [id]);
-      
-      return result.length > 0;
+      return await todoModel.deleteTodo(id);
     } catch (error) {
-      console.error('Error deleting todo:', error);
-      throw new Error('Failed to delete todo');
+      console.error('DAO error deleting todo:', error);
+      throw new DaoError('Failed to delete todo', error instanceof Error ? error : undefined);
     }
   }
 
   async deleteAllTodos(): Promise<boolean> {
     try {
-      const db = getDb();
-      await db.query(`
-        DELETE FROM todos
-      `);
-      
+      await todoModel.truncate();
       return true;
     } catch (error) {
-      console.error('Error deleting all todos:', error);
-      throw new Error('Failed to delete all todos');
+      console.error('DAO error deleting all todos:', error);
+      throw new DaoError('Failed to delete all todos', error instanceof Error ? error : undefined);
     }
   }
   
   // Helper method to get the total count of todos
   async getTodoCount(): Promise<number> {
     try {
-      const db = getDb();
-      const result = await db.query<{count: number}>(`
-        SELECT COUNT(*) as count FROM todos
-      `);
-      
-      return result[0].count;
+      return await todoModel.count();
     } catch (error) {
-      console.error('Error counting todos:', error);
-      throw new Error('Failed to count todos');
+      console.error('DAO error counting todos:', error);
+      throw new DaoError('Failed to count todos', error instanceof Error ? error : undefined);
     }
   }
 }
