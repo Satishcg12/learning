@@ -3,6 +3,6 @@
   "tasks": {
     "lint": "deno lint",
     "format": "deno fmt",
-    "test": "deno test"
+    "test": "deno test",
   }
 }

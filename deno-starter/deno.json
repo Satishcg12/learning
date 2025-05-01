@@ -23,7 +23,8 @@
     "prod": "deno run --allow-all apps/api/src/app.ts",
     "make-migrations": "deno run --allow-all scripts/make-migrations.ts",
     "migrate-up": "deno run --allow-all scripts/migrate.up.ts",
-    "migrate-down": "deno run --allow-all scripts/migrate.down.ts"
+    "migrate-down": "deno run --allow-all scripts/migrate.down.ts",
+    "generate:models": "deno run --allow-all scripts/generate-models.ts"
 
   },
   "imports": {

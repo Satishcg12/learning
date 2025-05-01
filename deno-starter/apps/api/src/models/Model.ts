@@ -1,4 +1,4 @@
-import { getDb } from "../../../../packages/utils/db.ts";
+import { getDb } from "@utils/db.ts";
 import { PoolClient } from "jsr:@db/postgres";
 
 /**
@@ -60,7 +60,7 @@ export class Model<T extends object = Record<string, unknown>> {
   protected table: string;
   protected fillable: string[] = [];
   protected primaryKey: string = "id";
-  
+
   // Query state properties
   protected client: PoolClient | null = null;
   protected isTransaction: boolean = false;
@@ -117,49 +117,61 @@ export class Model<T extends object = Record<string, unknown>> {
   }
 
   // Build and execute queries
-  protected buildQuery(type: QueryType, data?: Partial<T>): { query: string, bindings: BindingValue[] } {
+  protected buildQuery(
+    type: QueryType,
+    data?: Partial<T>,
+  ): { query: string; bindings: BindingValue[] } {
     let sql = "";
     const bindings: BindingValue[] = [];
-    
+
     // Helper to add WHERE clauses
     const buildWhereClause = (): string => {
       if (this.whereClauses.length === 0) return "";
       let bindingIndex = bindings.length + 1;
-      
-      const conditions = this.whereClauses.map(wc => {
+
+      const conditions = this.whereClauses.map((wc) => {
         let clause = wc.clause;
         // Replace ? placeholders with $n
-        wc.bindings.forEach(val => {
-          clause = clause.replace('?', `$${bindingIndex++}`);
+        wc.bindings.forEach((val) => {
+          clause = clause.replace("?", `$${bindingIndex++}`);
           bindings.push(val);
         });
         return `(${clause})`;
       }).join(" AND ");
-      
+
       return ` WHERE ${conditions}`;
     };
-    
+
     // Helper to build other parts of the query
-    const buildJoins = (): string => this.joinClauses.length ? " " + this.joinClauses.join(" ") : "";
-    const buildGroupBy = (): string => this.groupByColumns.length ? ` GROUP BY ${this.groupByColumns.join(", ")}` : "";
-    const buildOrderBy = (): string => this.orderByClauses.length ? ` ORDER BY ${this.orderByClauses.join(", ")}` : "";
-    const buildLimit = (): string => this.limitValue !== null ? ` LIMIT ${this.limitValue}` : "";
-    const buildOffset = (): string => this.offsetValue !== null ? ` OFFSET ${this.offsetValue}` : "";
+    const buildJoins = (): string =>
+      this.joinClauses.length ? " " + this.joinClauses.join(" ") : "";
+    const buildGroupBy = (): string =>
+      this.groupByColumns.length
+        ? ` GROUP BY ${this.groupByColumns.join(", ")}`
+        : "";
+    const buildOrderBy = (): string =>
+      this.orderByClauses.length
+        ? ` ORDER BY ${this.orderByClauses.join(", ")}`
+        : "";
+    const buildLimit = (): string =>
+      this.limitValue !== null ? ` LIMIT ${this.limitValue}` : "";
+    const buildOffset = (): string =>
+      this.offsetValue !== null ? ` OFFSET ${this.offsetValue}` : "";
     const buildHaving = (): string => {
       if (!this.havingInfo) return "";
       let bindingIndex = bindings.length + 1;
       let clause = this.havingInfo.clause;
-      
-      this.havingInfo.bindings.forEach(val => {
-        clause = clause.replace('?', `$${bindingIndex++}`);
+
+      this.havingInfo.bindings.forEach((val) => {
+        clause = clause.replace("?", `$${bindingIndex++}`);
         bindings.push(val);
       });
-      
+
       return ` HAVING ${clause}`;
     };
 
     switch (type) {
-      case "SELECT":
+      case "SELECT": {
         sql = `SELECT ${this.selectColumns.join(", ")} FROM ${this.table}`;
         sql += buildJoins();
         sql += buildWhereClause();
@@ -169,47 +181,62 @@ export class Model<T extends object = Record<string, unknown>> {
         sql += buildLimit();
         sql += buildOffset();
         break;
+      }
 
-      case "COUNT":
-        sql = `SELECT COUNT(${this.selectColumns[0] ?? '*'}) as total FROM ${this.table}`;
+      case "COUNT": {
+        sql = `SELECT COUNT(${
+          this.selectColumns[0] ?? "*"
+        }) as total FROM ${this.table}`;
         sql += buildJoins();
         sql += buildWhereClause();
         sql += buildGroupBy();
         sql += buildHaving();
         break;
-
-      case "INSERT":
+      }
+      case "INSERT": {
         if (!data) throw new Error("Data required for INSERT");
         const insertData = this.filterFillable(data);
         const cols = Object.keys(insertData);
         const vals = Object.values(insertData) as BindingValue[];
         const params = cols.map((_, i) => `$${i + 1}`).join(", ");
-        
-        sql = `INSERT INTO ${this.table} (${cols.join(", ")}) VALUES (${params}) RETURNING *`;
+
+        sql = `INSERT INTO ${this.table} (${
+          cols.join(", ")
+        }) VALUES (${params}) RETURNING *`;
         bindings.push(...vals);
         break;
+      }
 
-      case "UPDATE":
+      case "UPDATE": {
         if (!data) throw new Error("Data required for UPDATE");
         const updateData = this.filterFillable(data);
         const setCols = Object.keys(updateData);
         const setVals = Object.values(updateData) as BindingValue[];
-        
-        sql = `UPDATE ${this.table} SET ` + 
-              setCols.map((col, i) => `${col} = $${i + 1}`).join(", ");
+
+        sql = `UPDATE ${this.table} SET ` +
+          setCols.map((col, i) => `${col} = $${i + 1}`).join(", ");
         bindings.push(...setVals);
-        
+
         sql += buildWhereClause();
-        if (!this.whereClauses.length) console.warn("Update without WHERE updates all records");
+        if (!this.whereClauses.length) {
+          console.warn("Update without WHERE updates all records");
+        }
         sql += " RETURNING *";
         break;
+      }
 
-      case "DELETE":
+      case "DELETE": {
         sql = `DELETE FROM ${this.table}`;
         sql += buildWhereClause();
-        if (!this.whereClauses.length) console.warn("Delete without WHERE deletes all records");
+        if (!this.whereClauses.length) {
+          console.warn("Delete without WHERE deletes all records");
+        }
         sql += " RETURNING *";
         break;
+      }
+      default: {
+        throw new Error(`Unsupported query type: ${type}`);
+      }
     }
 
     return { query: sql, bindings };
@@ -217,25 +244,29 @@ export class Model<T extends object = Record<string, unknown>> {
 
   protected filterFillable(data: Partial<T>): Partial<T> {
     if (!this.fillable.length) return data;
-    
+
     const filtered: Partial<T> = {};
     for (const key of this.fillable) {
       if (key in data) {
         // Type assertion needed here since we can't guarantee key is in T with just 'object' constraint
-        (filtered as Record<string, unknown>)[key] = (data as Record<string, unknown>)[key];
+        (filtered as Record<string, unknown>)[key] =
+          (data as Record<string, unknown>)[key];
       }
     }
     return filtered;
   }
 
-  protected async execute<R>(query: string, bindings: BindingValue[]): Promise<R[]> {
+  protected async execute<R>(
+    query: string,
+    bindings: BindingValue[],
+  ): Promise<R[]> {
     try {
       const db = getDb();
       const client = this.client ?? await db.getClient();
-      
+
       const result = await client.queryObject<R>(query, bindings);
       if (!this.isTransaction) client.release();
-      
+
       this.resetQueryState();
       return result.rows;
     } catch (error) {
@@ -259,16 +290,19 @@ export class Model<T extends object = Record<string, unknown>> {
   protected cloneState(): Model<T> {
     const clone = new Model<T>(this.table);
     clone.selectColumns = [...this.selectColumns];
-    clone.whereClauses = this.whereClauses.map(wc => ({ 
-      ...wc, bindings: [...wc.bindings] 
+    clone.whereClauses = this.whereClauses.map((wc) => ({
+      ...wc,
+      bindings: [...wc.bindings],
     }));
     clone.joinClauses = [...this.joinClauses];
     clone.orderByClauses = [...this.orderByClauses];
     clone.groupByColumns = [...this.groupByColumns];
-    clone.havingInfo = this.havingInfo ? { 
-      clause: this.havingInfo.clause, 
-      bindings: [...this.havingInfo.bindings] 
-    } : null;
+    clone.havingInfo = this.havingInfo
+      ? {
+        clause: this.havingInfo.clause,
+        bindings: [...this.havingInfo.bindings],
+      }
+      : null;
     clone.limitValue = this.limitValue;
     clone.offsetValue = this.offsetValue;
     clone.fillable = [...this.fillable];
@@ -282,13 +316,17 @@ export class Model<T extends object = Record<string, unknown>> {
     return this;
   }
 
-  where(column: string, operator: string | BindingValue, value?: BindingValue): Model<T> {
-    const actualOperator = value === undefined ? '=' : operator;
+  where(
+    column: string,
+    operator: string | BindingValue,
+    value?: BindingValue,
+  ): Model<T> {
+    const actualOperator = value === undefined ? "=" : operator;
     const actualValue = value === undefined ? operator : value;
-    this.whereClauses.push({ 
-      type: "basic", 
-      clause: `${column} ${actualOperator} ?`, 
-      bindings: [actualValue] 
+    this.whereClauses.push({
+      type: "basic",
+      clause: `${column} ${actualOperator} ?`,
+      bindings: [actualValue],
     });
     return this;
   }
@@ -299,34 +337,42 @@ export class Model<T extends object = Record<string, unknown>> {
   }
 
   whereIn(column: string, values: BindingValue[]): Model<T> {
-    if (!values.length) return this.whereRaw('1 = 0');
-    const placeholders = values.map(() => '?').join(', ');
-    this.whereClauses.push({ 
-      type: "in", 
-      clause: `${column} IN (${placeholders})`, 
-      bindings: values 
+    if (!values.length) return this.whereRaw("1 = 0");
+    const placeholders = values.map(() => "?").join(", ");
+    this.whereClauses.push({
+      type: "in",
+      clause: `${column} IN (${placeholders})`,
+      bindings: values,
     });
     return this;
   }
-  
+
   whereNotIn(column: string, values: BindingValue[]): Model<T> {
     if (!values.length) return this;
-    const placeholders = values.map(() => '?').join(', ');
-    this.whereClauses.push({ 
-      type: "notIn", 
-      clause: `${column} NOT IN (${placeholders})`, 
-      bindings: values 
+    const placeholders = values.map(() => "?").join(", ");
+    this.whereClauses.push({
+      type: "notIn",
+      clause: `${column} NOT IN (${placeholders})`,
+      bindings: values,
     });
     return this;
   }
 
   whereNull(column: string): Model<T> {
-    this.whereClauses.push({ type: "null", clause: `${column} IS NULL`, bindings: [] });
+    this.whereClauses.push({
+      type: "null",
+      clause: `${column} IS NULL`,
+      bindings: [],
+    });
     return this;
   }
 
   whereNotNull(column: string): Model<T> {
-    this.whereClauses.push({ type: "notNull", clause: `${column} IS NOT NULL`, bindings: [] });
+    this.whereClauses.push({
+      type: "notNull",
+      clause: `${column} IS NOT NULL`,
+      bindings: [],
+    });
     return this;
   }
 
@@ -355,18 +401,39 @@ export class Model<T extends object = Record<string, unknown>> {
     return this;
   }
 
-  innerJoin(table: string, firstColumn: string, operator: string, secondColumn: string): Model<T> {
-    this.joinClauses.push(`INNER JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`);
+  innerJoin(
+    table: string,
+    firstColumn: string,
+    operator: string,
+    secondColumn: string,
+  ): Model<T> {
+    this.joinClauses.push(
+      `INNER JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`,
+    );
     return this;
   }
 
-  leftJoin(table: string, firstColumn: string, operator: string, secondColumn: string): Model<T> {
-    this.joinClauses.push(`LEFT JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`);
+  leftJoin(
+    table: string,
+    firstColumn: string,
+    operator: string,
+    secondColumn: string,
+  ): Model<T> {
+    this.joinClauses.push(
+      `LEFT JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`,
+    );
     return this;
   }
 
-  rightJoin(table: string, firstColumn: string, operator: string, secondColumn: string): Model<T> {
-    this.joinClauses.push(`RIGHT JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`);
+  rightJoin(
+    table: string,
+    firstColumn: string,
+    operator: string,
+    secondColumn: string,
+  ): Model<T> {
+    this.joinClauses.push(
+      `RIGHT JOIN ${table} ON ${firstColumn} ${operator} ${secondColumn}`,
+    );
     return this;
   }
 
@@ -388,12 +455,16 @@ export class Model<T extends object = Record<string, unknown>> {
     return await this.execute<R>(query, bindings);
   }
 
-  async find<R = T>(id: string | number): Promise<R | null> {
+  find<R = T>(id: string | number): Promise<R | null> {
     this.resetQueryState();
     return this.where(this.primaryKey, id).first<R>();
   }
 
-  async findBy<R = T>(column: string, operator: string | BindingValue, value?: BindingValue): Promise<R[]> {
+  findBy<R = T>(
+    column: string,
+    operator: string | BindingValue,
+    value?: BindingValue,
+  ): Promise<R[]> {
     this.resetQueryState();
     return this.where(column, operator, value).getAll<R>();
   }
@@ -417,18 +488,21 @@ export class Model<T extends object = Record<string, unknown>> {
   async count(column: string = "*"): Promise<number> {
     const originalSelect = this.selectColumns;
     this.selectColumns = [column];
-    
+
     const { query, bindings } = this.buildQuery("COUNT");
     this.selectColumns = originalSelect;
-    
-    const results = await this.execute<{ total: string | number }>(query, bindings);
+
+    const results = await this.execute<{ total: string | number }>(
+      query,
+      bindings,
+    );
     return parseInt(String(results[0]?.total ?? "0"));
   }
 
   async exists(): Promise<boolean> {
     const clone = this.cloneState();
     clone.select("1").limit(1);
-    
+
     const { query, bindings } = clone.buildQuery("SELECT");
     const results = await clone.execute<{ "1": number }>(query, bindings);
     return results.length > 0;
@@ -448,20 +522,23 @@ export class Model<T extends object = Record<string, unknown>> {
     return await this.raw<R>(sql, bindings);
   }
 
-  async paginate<R = T>(page: number = 1, perPage: number = 15): Promise<PaginatedData<R>> {
+  async paginate<R = T>(
+    page: number = 1,
+    perPage: number = 15,
+  ): Promise<PaginatedData<R>> {
     // Get total count first
     const countModel = this.cloneState();
     const total = await countModel.count();
-    
+
     // Get paginated data
     this.limit(perPage).offset((page - 1) * perPage);
     const data = await this.getAll<R>();
-    
+
     // Calculate pagination info
     const lastPage = Math.ceil(total / perPage);
     const from = total > 0 ? (page - 1) * perPage + 1 : null;
     const to = total > 0 ? Math.min(page * perPage, total) : null;
-    
+
     return {
       data,
       pagination: { total, perPage, currentPage: page, lastPage, from, to },
