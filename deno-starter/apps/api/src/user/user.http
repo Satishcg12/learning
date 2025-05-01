@@ -1,0 +1,41 @@
+@baseUrl = http://localhost:8000/api
+@userId = 1
+
+### Get all users
+GET {{baseUrl}}/users
+
+### Get all users with pagination
+GET {{baseUrl}}/users?page=1&limit=10
+
+### Get a user by ID
+GET {{baseUrl}}/users/{{userId}}
+
+### Create a new user
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "securepassword123"
+}
+
+### Update a user
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "John Updated",
+  "email": "john.updated@example.com"
+}
+
+### Update a user's password
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "password": "newSecurePassword456"
+}
+
+### Delete a user
+DELETE {{baseUrl}}/users/{{userId}}
