@@ -1,0 +1,29 @@
+@baseUrl = http://localhost:8000/api
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "satish",
+  "email": "satish@gmail.com",
+  "password": "securepassword123"
+}
+
+### Login with user credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "satish@gmail.com",
+  "password": "securepassword123"
+}
+
+### Login with invalid credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "wrongpassword"
+}

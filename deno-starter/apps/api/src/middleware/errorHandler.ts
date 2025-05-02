@@ -5,7 +5,7 @@ import {
   NotFoundError, 
   DatabaseError, 
   DaoError 
-} from "../utils/errors.ts";
+} from "../../../../packages/utils/errors.ts";
 
 /**
  * Global error handler middleware for the API
@@ -16,7 +16,7 @@ export async function errorHandler(ctx: Context<State>, next: Next) {
     await next();
   } catch (error) {
     const err = error as Error;
-    console.error(`[ERROR] ${err.name}: ${err.message}`, err);
+    // console.error(`[ERROR] ${err.name}: ${err.message}`, err);
     
     // Handle API errors (already formatted with status)
     if (error instanceof ApiError) {

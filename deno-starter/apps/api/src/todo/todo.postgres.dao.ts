@@ -2,7 +2,7 @@ import { TodoResponse } from "@api/todo/todo.dto.ts";
 import { Todo } from "../models/todo.model.ts";
 import { ITodoDao } from "@api/todo/todo.interface.ts";
 import todoModel from "../models/todo.model.ts";
-import { DaoError } from "../utils/errors.ts";
+import { DaoError } from "../../../../packages/utils/errors.ts";
 
 export class TodoPostgresDao implements ITodoDao {
   

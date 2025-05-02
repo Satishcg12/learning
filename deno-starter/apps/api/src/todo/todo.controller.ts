@@ -1,6 +1,6 @@
 import { RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { todoService } from "@api/todo/todo.service.impl.ts";
-import { ApiError } from "../utils/errors.ts";
+import { ApiError } from "../../../../packages/utils/errors.ts";
 
 export const CreateTodo = async (ctx: RouterContext<string>) => {
   let body;

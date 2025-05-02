@@ -1,6 +1,6 @@
 import { RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { UserService } from "./user.service.impl.ts";
-import { ApiError } from "../utils/errors.ts";
+import { ApiError } from "../../../../packages/utils/errors.ts";
 
 // Create a singleton instance of the service
 const userService = new UserService();
@@ -20,10 +20,16 @@ export const CreateUser = async (ctx: RouterContext<string>) => {
     throw ApiError.badRequest("Name, email, and password are required");
   }
   
-  const res = await userService.createUser({ name, email, password });
-
-  ctx.response.status = 201;
-  ctx.response.body = res;
+  try {
+    const res = await userService.createUser({ name, email, password });
+    ctx.response.status = 201;
+    ctx.response.body = res;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "ValidationError") {
+      throw ApiError.badRequest(error.message);
+    }
+    throw error; // Re-throw other errors to be handled by the error middleware
+  }
 };
 
 export const GetUsers = async (ctx: RouterContext<string>) => {

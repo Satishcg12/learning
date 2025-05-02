@@ -7,7 +7,7 @@ import {
 } from "@api/todo/todo.dto.ts";
 import { ITodoService } from "@api/todo/todo.interface.ts";
 import { Todo } from "../models/todo.model.ts";
-import { ValidationError, NotFoundError, DatabaseError, DaoError } from "../utils/errors.ts";
+import { ValidationError, NotFoundError, DatabaseError, DaoError } from "../../../../packages/utils/errors.ts";
 
 export class TodoServiceImpl implements ITodoService {
   async createTodo(todo: CreateTodoRequest): Promise<TodoResponse> {

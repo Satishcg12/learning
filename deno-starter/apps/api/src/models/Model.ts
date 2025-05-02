@@ -338,7 +338,7 @@ export class Model<T extends object = Record<string, unknown>> {
 
   whereIn(column: string, values: BindingValue[]): Model<T> {
     if (!values.length) return this.whereRaw("1 = 0");
-    const placeholders = values.map(() => "?").join(", ");
+    const placeholders = values.map(() => "?").join(", ");// ["satish","black"] -> "?, ?"
     this.whereClauses.push({
       type: "in",
       clause: `${column} IN (${placeholders})`,
@@ -397,7 +397,7 @@ export class Model<T extends object = Record<string, unknown>> {
   }
 
   having(condition: string, bindings: BindingValue[] = []): Model<T> {
-    this.havingInfo = { clause: condition, bindings };
+    this.havingInfo = { clause: condition, bindings };// eg. "COUNT(*) > 1" 
     return this;
   }
 

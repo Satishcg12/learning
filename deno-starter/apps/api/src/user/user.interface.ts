@@ -12,6 +12,10 @@ export interface IUserService {
   getUsers(req: GetUsersRequest): Promise<UserListResponse>;
 
   getUserById(id: string): Promise<UserResponse>;
+  
+  getUserByEmail(email: string): Promise<UserResponse | null>;
+  
+  getUserDetailsForAuth(email: string): Promise<User | null>;
 
   updateUser(id: string, updatedUser: Partial<User>): Promise<UserResponse>;
 
@@ -21,6 +25,7 @@ export interface IUserService {
 export interface IUserDao {
   getUsers(page?: number, limit?: number): Promise<UserResponse[]>;
   getUserById(id: string): Promise<User | null>;
+  getUserByEmail(email: string): Promise<User | null>;
   createUser(user: User): Promise<User>;
   updateUser(id: string, updatedUser: Partial<User>): Promise<User | null>;
   deleteUser(id: string): Promise<boolean>;
