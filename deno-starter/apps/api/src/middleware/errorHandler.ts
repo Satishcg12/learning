@@ -5,7 +5,7 @@ import {
   NotFoundError, 
   DatabaseError, 
   DaoError 
-} from "../../../../packages/utils/errors.ts";
+} from "@utils/errors.ts";
 
 /**
  * Global error handler middleware for the API
